@@ -150,6 +150,7 @@ class DrawTextView:UIView {
                 self.center = newCenter
                 
                 if oldCenter != self.center {
+                    touchBenPoint = newCenterPoint
                     self.btnDelegate?.drawTextViewPullToNewPosition(drawTextView: self, index: self.index, oldCenterPoint: oldCenter, newCenterPoint: newCenter)
                 }
             }
