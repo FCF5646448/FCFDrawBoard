@@ -9,10 +9,11 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Quartz2DTestController" customModule="FCFCommonFrame" customModuleProvider="target">
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Quartz2DTestController" customModule="FCFDrawBoard" customModuleProvider="target">
             <connections>
                 <outlet property="backBtn" destination="fdu-pL-FeH" id="MxJ-Wk-BDS"/>
                 <outlet property="bgImage" destination="n60-u4-Afv" id="C94-BM-nNh"/>
+                <outlet property="bottomView" destination="cDi-G7-gU8" id="XHb-By-h8k"/>
                 <outlet property="clearBtn" destination="fUU-1A-sqr" id="gWV-zS-Utr"/>
                 <outlet property="colorBtn" destination="Exl-Ao-Y78" id="I7V-w9-cez"/>
                 <outlet property="drawContext" destination="r4N-Tv-Xn0" id="IwO-ag-VcQ"/>
@@ -126,7 +127,7 @@
                         <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="n60-u4-Afv">
                             <rect key="frame" x="0.0" y="40" width="375" height="582"/>
                         </imageView>
-                        <imageView multipleTouchEnabled="YES" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="r4N-Tv-Xn0" customClass="DrawContext" customModule="FCFCommonFrame" customModuleProvider="target">
+                        <imageView multipleTouchEnabled="YES" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="r4N-Tv-Xn0" customClass="DrawContext" customModule="FCFDrawBoard" customModuleProvider="target">
                             <rect key="frame" x="0.0" y="40" width="375" height="582"/>
                         </imageView>
                     </subviews>

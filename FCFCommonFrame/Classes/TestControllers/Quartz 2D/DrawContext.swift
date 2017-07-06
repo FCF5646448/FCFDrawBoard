@@ -11,6 +11,7 @@ import ObjectMapper
 
 protocol DrawContextDelegate {
     func drawContext(uploadxml view:DrawContext,xmlStr:String?)
+    func drawContextScale(view:DrawContext,scale:CGFloat)
 }
 
 enum DrawingState{
@@ -246,6 +247,17 @@ class DrawContext: UIImageView {
     override func awakeFromNib() {
         super.awakeFromNib()
         
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinchDid))
+        self.addGestureRecognizer(pinch)
+    }
+    
+    func pinchDid(_ recognizer:UIPinchGestureRecognizer){
+        print(recognizer.scale)
+        if recognizer.scale <= 1.0 {
+            return 
+        }
+        self.transform = CGAffineTransform(scaleX: recognizer.scale, y: recognizer.scale)
+        self.delegate?.drawContextScale(view: self, scale: recognizer.scale)
     }
     
     //初始化🖌️，设置默认为曲线、黑色、笔宽为1.0
@@ -787,6 +799,10 @@ extension DrawContext{
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if touches.count >= 2 {
+            return
+        }
+        
         let point:CGPoint = (touches.first?.location(in: self))!
         if !self.rotateding{
             //每次绘画的时候将之前撤销的清理掉
@@ -796,6 +812,11 @@ extension DrawContext{
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        if touches.count >= 2 {
+            return
+        }
+        
         let point:CGPoint = (touches.first?.location(in: self))!
         if !self.rotateding{
             self.drawPoints(state: .moved, point: point)
@@ -810,6 +831,11 @@ extension DrawContext{
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        if touches.count >= 2 {
+            return
+        }
+        
         let point:CGPoint = (touches.first?.location(in: self))!
         if !self.rotateding{
             self.drawPoints(state: .ended, point: point)
@@ -817,6 +843,9 @@ extension DrawContext{
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if touches.count >= 2 {
+            return
+        }
         if let brush = self.brush {
             brush.endPoint = nil
         }

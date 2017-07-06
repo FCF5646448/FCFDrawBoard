@@ -43,6 +43,7 @@ class Quartz2DTestController: BaseViewController {
     
     @IBOutlet weak var segment: UISegmentedControl!
     
+    @IBOutlet weak var bottomView: UIView!
     @IBOutlet weak var bgImage: UIImageView! //曲谱背景
     
     @IBOutlet weak var forwardBtn: UIButton!
@@ -101,6 +102,12 @@ class Quartz2DTestController: BaseViewController {
         segment.addTarget(self, action: #selector(segmentValueChanged), for: .valueChanged)
         segment.selectedSegmentIndex = selectedIndex //默认就是画曲线的画笔
         segmentValueChanged(seg: segment)
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        self.view.bringSubview(toFront: self.segment)
+        self.view.bringSubview(toFront: self.bottomView)
     }
     
     func updateUI(){
@@ -569,6 +576,12 @@ extension Quartz2DTestController:DrawContextDelegate{
             self?.hidedownLoading()
             self?.showMsg("网络异常")
         }
+    }
+    
+    func drawContextScale(view:DrawContext,scale:CGFloat){
+        self.view.bringSubview(toFront: self.segment)
+        self.view.bringSubview(toFront: self.bottomView)
+        self.bgImage.transform = CGAffineTransform(scaleX: scale, y: scale)
     }
 }
 
