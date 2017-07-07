@@ -12,11 +12,9 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="Quartz2DTestController" customModule="FCFDrawBoard" customModuleProvider="target">
             <connections>
                 <outlet property="backBtn" destination="fdu-pL-FeH" id="MxJ-Wk-BDS"/>
-                <outlet property="bgImage" destination="n60-u4-Afv" id="C94-BM-nNh"/>
                 <outlet property="bottomView" destination="cDi-G7-gU8" id="XHb-By-h8k"/>
                 <outlet property="clearBtn" destination="fUU-1A-sqr" id="gWV-zS-Utr"/>
                 <outlet property="colorBtn" destination="Exl-Ao-Y78" id="I7V-w9-cez"/>
-                <outlet property="drawContext" destination="r4N-Tv-Xn0" id="IwO-ag-VcQ"/>
                 <outlet property="fontSizeSlide" destination="NQa-Sh-dGC" id="yFM-fs-ms8"/>
                 <outlet property="forwardBtn" destination="a5r-Xn-rk9" id="5wo-QK-LSk"/>
                 <outlet property="segment" destination="w10-2c-9jZ" id="NgN-46-MAk"/>
@@ -124,28 +122,14 @@
                                 <segment title="橡皮擦"/>
                             </segments>
                         </segmentedControl>
-                        <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="n60-u4-Afv">
-                            <rect key="frame" x="0.0" y="40" width="375" height="582"/>
-                        </imageView>
-                        <imageView multipleTouchEnabled="YES" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="r4N-Tv-Xn0" customClass="DrawContext" customModule="FCFDrawBoard" customModuleProvider="target">
-                            <rect key="frame" x="0.0" y="40" width="375" height="582"/>
-                        </imageView>
                     </subviews>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <constraints>
                         <constraint firstAttribute="trailing" secondItem="w10-2c-9jZ" secondAttribute="trailing" id="0Re-Cd-dpd"/>
                         <constraint firstItem="cDi-G7-gU8" firstAttribute="leading" secondItem="5JV-u7-3of" secondAttribute="leading" id="1tx-db-WRC"/>
                         <constraint firstItem="w10-2c-9jZ" firstAttribute="leading" secondItem="5JV-u7-3of" secondAttribute="leading" id="7XW-hV-Ani"/>
-                        <constraint firstAttribute="trailing" secondItem="n60-u4-Afv" secondAttribute="trailing" id="Kcl-0W-pxB"/>
                         <constraint firstItem="w10-2c-9jZ" firstAttribute="top" secondItem="5JV-u7-3of" secondAttribute="top" id="PeW-v6-8DB"/>
-                        <constraint firstItem="r4N-Tv-Xn0" firstAttribute="centerY" secondItem="n60-u4-Afv" secondAttribute="centerY" id="Wzc-65-vwU"/>
-                        <constraint firstItem="r4N-Tv-Xn0" firstAttribute="centerX" secondItem="n60-u4-Afv" secondAttribute="centerX" id="YP7-02-cdg"/>
-                        <constraint firstItem="r4N-Tv-Xn0" firstAttribute="width" secondItem="n60-u4-Afv" secondAttribute="width" id="ckB-Gf-LHv"/>
-                        <constraint firstItem="n60-u4-Afv" firstAttribute="top" secondItem="w10-2c-9jZ" secondAttribute="bottom" id="igb-vb-2s1"/>
-                        <constraint firstItem="n60-u4-Afv" firstAttribute="leading" secondItem="5JV-u7-3of" secondAttribute="leading" id="kWF-uU-sc2"/>
                         <constraint firstAttribute="trailing" secondItem="cDi-G7-gU8" secondAttribute="trailing" id="odx-P1-Npd"/>
-                        <constraint firstItem="cDi-G7-gU8" firstAttribute="top" secondItem="n60-u4-Afv" secondAttribute="bottom" id="rNd-WE-im1"/>
-                        <constraint firstItem="r4N-Tv-Xn0" firstAttribute="height" secondItem="n60-u4-Afv" secondAttribute="height" id="z2x-sV-uzF"/>
                         <constraint firstAttribute="bottom" secondItem="cDi-G7-gU8" secondAttribute="bottom" id="zgm-hn-KAF"/>
                     </constraints>
                 </view>

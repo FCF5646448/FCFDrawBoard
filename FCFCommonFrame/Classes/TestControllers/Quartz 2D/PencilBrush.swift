@@ -15,8 +15,10 @@ class PencilBrush: BaseBrush {
             context.move(to: lastP)
             context.addLine(to: self.endPoint!)
         }else{
-            context.move(to: self.beginPoint!)
-            context.addLine(to: self.endPoint!)
+            if self.beginPoint != nil && self.endPoint != nil {
+                context.move(to: self.beginPoint!)
+                context.addLine(to: self.endPoint!)
+            }
         }
     }
     

@@ -25,7 +25,6 @@ class DrawTextView:UIView {
     var touchBenPoint:CGPoint?
     var index:Int = -1 //在数组中的下标
     var canmoved:Bool = false //是否可移动
-    
     var transformAngle:CGFloat = 0 //旋转弧度
     
     init(frame: CGRect,index:Int,color:String,strokewidth:CGFloat) {
@@ -46,6 +45,7 @@ class DrawTextView:UIView {
         self.textView.font = UIFont.systemFont(ofSize:strokewidth)
         self.canmoved = true
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(move))
+        panGesture.maximumNumberOfTouches = 1
         self.addGestureRecognizer(panGesture)
     }
     

@@ -38,13 +38,10 @@ class xmlDataObj: BaseModel {
 
 //画图的原理就是每次从上一点画到下一点
 class Quartz2DTestController: BaseViewController {
-
-    @IBOutlet weak var drawContext: DrawContext!
     
     @IBOutlet weak var segment: UISegmentedControl!
     
     @IBOutlet weak var bottomView: UIView!
-    @IBOutlet weak var bgImage: UIImageView! //曲谱背景
     
     @IBOutlet weak var forwardBtn: UIButton!
     
@@ -56,49 +53,33 @@ class Quartz2DTestController: BaseViewController {
     
     @IBOutlet weak var fontSizeSlide: UISlider!
     
-    var wBili:CGFloat = 1.0
-    var hBili:CGFloat = 1.0
     
-    var imgW:CGFloat = 1.0
-    var imgH:CGFloat = 1.0
+    var hasbegin:Bool = false
+    
+    var surrentScale:CGFloat = 1 //记录上一次手势放大的倍数
+    
+    var currentImgViewContent:ImgviewContent! //当前画布
     
     var selectedIndex:Int = 0
     
     var selectedColor:String = "000000" {
         didSet {
             self.colorBtn.backgroundColor = UIColor.haxString(hex: selectedColor)
-            self.drawContext.changeBrushColor(color: selectedColor)
+            self.currentImgViewContent?.changeBrushColor(color: selectedColor)
         }
     }
     
     var fontSize:CGFloat = 13.0 {
         didSet {
-            self.drawContext.changeBrushSize(size: fontSize)
+            self.currentImgViewContent?.changeBrushSize(size: fontSize)
         }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.edgesForExtendedLayout = UIRectEdge()
         title = "画板"
-        self.drawContext.delegate = self
         updateUI()
-        let img = UIImage(named:"qupu")
-        self.bgImage.image = img
-        self.imgW = img!.size.width
-        self.imgH = img!.size.height
-        
-        self.drawContext.pivot_x = imgW*1.0/2.0
-        self.drawContext.pivot_y = imgH*1.0/2.0
-        
-        let ScreenW = UIScreen.main.bounds.width//self.bgImage.frame.width
-        let ScreenH = UIScreen.main.bounds.height - 85 - 64 //self.bgImage.frame.height
-        
-        self.wBili =  ScreenW*1.0/imgW
-        self.hBili = ScreenH*1.0/imgH
-        
-        self.drawContext.wBili = self.wBili
-        self.drawContext.hBili = self.hBili
-        
         segment.addTarget(self, action: #selector(segmentValueChanged), for: .valueChanged)
         segment.selectedSegmentIndex = selectedIndex //默认就是画曲线的画笔
         segmentValueChanged(seg: segment)
@@ -106,8 +87,6 @@ class Quartz2DTestController: BaseViewController {
     
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        self.view.bringSubview(toFront: self.segment)
-        self.view.bringSubview(toFront: self.bottomView)
     }
     
     func updateUI(){
@@ -134,6 +113,18 @@ class Quartz2DTestController: BaseViewController {
         let rbtn2 = UIBarButtonItem(customView: btn2)
         
         self.navigationItem.rightBarButtonItems = [rbtn,rbtn2]
+        
+        let scrollView = ImgScrollVIew(frame: CGRect(x: 0, y: 40, width: ContentWidth, height: ContentHeight-85)) //UIScrollView
+        let imgContent = ImgviewContent(frame: CGRect(x: 0, y: 0, width: ContentWidth, height: ContentHeight-85))
+        imgContent.delegate = self
+        self.currentImgViewContent = imgContent
+        scrollView.contentSize = CGSize(width: ContentWidth, height: ContentHeight-85)
+        scrollView.addSubview(imgContent)
+        scrollView.delegate = self
+        self.view.addSubview(scrollView)
+        scrollView.minimumZoomScale = 1.0
+        scrollView.maximumZoomScale = 10.0
+        scrollView.bouncesZoom = true
     }
 
     override func didReceiveMemoryWarning() {
@@ -142,8 +133,8 @@ class Quartz2DTestController: BaseViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if self.drawContext.hasDraw {
-            self.drawContext.restoreDraw()
+        if self.currentImgViewContent.hasDraw() {
+            self.currentImgViewContent.restoreDraw()
         }else{
             //从xml中读取
             self.refresh()
@@ -152,20 +143,20 @@ class Quartz2DTestController: BaseViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.drawContext.removeUselessSave()
+        self.currentImgViewContent.removeUselessSave()
     }
 
     //复原 减笔画
     @IBAction func backoutSelected(_ sender: Any) {
-        if self.drawContext.canBack() {
-            drawContext.undo()
+        if self.currentImgViewContent.canBack() {
+            currentImgViewContent.undo()
         }
     }
     
     //重做 加笔画
     @IBAction func redrawSelected(_ sender: Any) {
-        if self.drawContext.canForward() {
-            drawContext.redo()
+        if self.currentImgViewContent.canForward() {
+            self.currentImgViewContent.redo()
         }
     }
     
@@ -184,35 +175,35 @@ class Quartz2DTestController: BaseViewController {
     
     @IBAction func clearBtnClicked(_ sender: Any) {
         //清空就没法重做了
-        self.drawContext.clear()
+        self.currentImgViewContent.clear()
     }
     
     func segmentValueChanged(seg:UISegmentedControl){
         if seg.selectedSegmentIndex == 2 {
-            self.drawContext.showTextVIewUIMsg()
+            self.currentImgViewContent.showTextVIewUIMsg()
         }else{
-            self.drawContext.hideTextViewUIMsg()
+            self.currentImgViewContent.hideTextViewUIMsg()
         }
         switch seg.selectedSegmentIndex {
         case 0:
             //画笔
-            self.drawContext.initBrush(type: .Pentype(.Curve), color: selectedColor, width: fontSize)
+            self.currentImgViewContent.initBrush(type: .Pentype(.Curve), color: selectedColor, width: fontSize)
             break
         case 1:
             //形状,先默认是矩形
-            self.drawContext.initBrush(type: .Formtype(.Rect), color: selectedColor, width: fontSize)
+            self.currentImgViewContent.initBrush(type: .Formtype(.Rect), color: selectedColor, width: fontSize)
             break
         case 2:
             //文本
-            self.drawContext.initBrush(type: .Text, color: selectedColor, width: fontSize)
+            self.currentImgViewContent.initBrush(type: .Text, color: selectedColor, width: fontSize)
             break
         case 3:
             //音符，当作文字来添加
-            self.drawContext.initBrush(type: .Note, color: selectedColor, width: fontSize)
+            self.currentImgViewContent.initBrush(type: .Note, color: selectedColor, width: fontSize)
             break
         case 4:
             //橡皮擦,不需要选颜色
-            self.drawContext.initBrush(type: .Eraser, color: selectedColor, width: fontSize)
+            self.currentImgViewContent.initBrush(type: .Eraser, color: selectedColor, width: fontSize)
             break
         default:
             break
@@ -239,7 +230,7 @@ class Quartz2DTestController: BaseViewController {
 extension Quartz2DTestController{
     //将xml的操作顺序放进数组里
     func getDataFromXML(){
-        self.drawContext.clear()
+        self.currentImgViewContent.clear()
         
         var pathArr:[PathModel] = []
         
@@ -346,169 +337,16 @@ extension Quartz2DTestController{
             }else if obj.pen_type == "TEXT" {
                 obj.type = .Text
             }
-            self.autoDraw(obj: obj)
-        }
-    }
-    
-    func autoDraw(obj:PathModel){
-        var dwidth:CGFloat = 0.0
-        switch obj.type! {
-        case .Pentype(.Curve):
-            print("曲线")
-            self.selectedIndex = 0
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
             
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-            
-            self.drawContext.initBrush(type: .Pentype(.Curve), color: obj.color, width: dwidth)
-            if let pointStr = obj.point_list {
-                self.draw(points: pointStr)
-            }
-            
-        case .Pentype(.Line):
-            print("直线")
-            self.selectedIndex = 0//后续改
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-           self.drawContext.initBrush(type: .Pentype(.Line), color: obj.color, width: dwidth)
-            if let x = obj.start_x, let y = obj.start_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .begin)
-            }
-            if let x = obj.end_x, let y = obj.end_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .ended)
-            }
-        case .Pentype(.ImaginaryLine):
-            print("虚线")
-            self.selectedIndex = 0 //后续改
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-            self.drawContext.initBrush(type: .Pentype(.ImaginaryLine), color: obj.color, width: dwidth)
-            if let x = obj.start_x, let y = obj.start_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .begin)
-            }
-            if let x = obj.end_x, let y = obj.end_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .ended)
-            }
-        case .Formtype(.Rect):
-            print("矩形")
-            self.selectedIndex = 1
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-            self.drawContext.initBrush(type: .Formtype(.Rect), color: obj.color, width: dwidth)
-            if let x = obj.start_x, let y = obj.start_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .begin)
-            }
-            if let x = obj.end_x, let y = obj.end_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .ended)
-            }
-        case .Formtype(.Ellipse):
-            print("椭圆")
-            self.selectedIndex = 1 //后续改
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-            self.drawContext.initBrush(type: .Formtype(.Ellipse), color: obj.color, width: dwidth)
-            if let x = obj.start_x, let y = obj.start_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .begin)
-            }
-            if let x = obj.end_x, let y = obj.end_y {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .ended)
-            }
-        case .Eraser:
-            print("橡皮擦")
-            self.selectedIndex = 4
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-            self.drawContext.initBrush(type: .Eraser, color: obj.color, width: dwidth)
-            if let pointStr = obj.point_list {
-                self.draw(points: pointStr)
-            }
-        case .Note:
-            print("音符")
-            self.selectedIndex = 3
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.pen_width != nil ? obj.pen_width!.floatValue/2.0 : 20
-            self.drawContext.initBrush(type: .Note, color: obj.color, width: dwidth)
-            if let x = obj.end_x, let y = obj.end_y,let symbol = obj.symbol {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .begin , text: symbol)
-            }
-        case .Text:
-            print("文本")
-            self.selectedIndex = 2
-            self.selectedColor = obj.color!
-            self.colorBtn.backgroundColor = UIColor.haxString(hex: obj.color!)
-            dwidth = obj.size != nil ? obj.size!.floatValue/2.0 : 20
-            self.drawContext.initBrush(type: .Text, color: obj.color, width: dwidth)
-            if let x = obj.text_x, let y = obj.text_y,let text = obj.text {
-                self.drawPoint(point: CGPoint(x: x.floatValue, y: y.floatValue), state: .begin,text: text,angle:(obj.text_rotate as! NSString).doubleValue)
-            }
-        }
-        
-        self.segment.selectedSegmentIndex = self.selectedIndex
-        if self.segment.selectedSegmentIndex == 2 {
-            self.drawContext.showTextVIewUIMsg()
-        }else{
-            self.drawContext.hideTextViewUIMsg()
-        }
-    
-        self.fontSizeSlide.setValue((Float(dwidth > CGFloat(35.0) ? CGFloat(35.0) : dwidth)), animated: false)
-        self.fontSize = (dwidth > CGFloat(35.0) ? CGFloat(35.0) : dwidth)
-    
-    }
-    
-    //画线，橡皮擦
-    func draw(points:String){
-        let pointStrArr = points.components(separatedBy: "-") // componentsSeparatedByString("-")
-        var pointsArr:[CGPoint] = []
-        for str in pointStrArr {
-            if str == "" {
-                continue
-            }
-            let point:CGPoint = CGPointFromString(str)
-            pointsArr.append(point)
-        }
-        
-        for i in 0..<pointsArr.count {
-            var point = pointsArr[i]
-            point.x = point.x * self.wBili
-            point.y = point.y * self.hBili
-            if i == 0 {
-                self.drawContext.drawPoints(state: .begin, point: point)
-            }else if i == pointsArr.count - 1 {
-                self.drawContext.drawPoints(state: .ended, point: point)
-            }else{
-                self.drawContext.drawPoints(state: .moved, point: point)
-            }
+            self.currentImgViewContent.autoDraw(obj: obj)
         }
     }
-    
-    func drawPoint(point:CGPoint,state:DrawingState,text:String?=nil,angle:Double?=nil) {
-        var p = point
-        p.x = p.x * self.wBili
-        p.y = p.y * self.hBili
-        switch state {
-        case .begin:
-            self.drawContext.drawPoints(state: .begin, point: p, textStr: text , angle:angle)
-        case .moved:
-            self.drawContext.drawPoints(state: .moved, point: p, textStr: text , angle:angle)
-        case .ended:
-            self.drawContext.drawPoints(state: .ended, point: p, textStr: text , angle:angle)
-        }
-    }
-    
-    
 }
 
 extension Quartz2DTestController{
     //将全局数组里的数据按画画顺序存进xml文本中
     func saveXml(){
-        self.drawContext.saveDrawToXML()
+        self.currentImgViewContent.saveXml()
     }
     
     func refresh(){
@@ -549,9 +387,16 @@ class PostXmlModel:BaseModel{
     }
 }
 
-extension Quartz2DTestController:DrawContextDelegate{
+extension Quartz2DTestController:ImgviewContentDelegate{
+    func imgContent(view:ImgviewContent,segmentIndex:NSInteger,selectcolor:String,dwidth:CGFloat){
+        self.segment.selectedSegmentIndex = segmentIndex
+        self.colorBtn.backgroundColor = UIColor.haxString(hex: selectcolor)
+        self.fontSizeSlide.setValue((Float(dwidth > CGFloat(35.0) ? CGFloat(35.0) : dwidth)), animated: false)
+        self.fontSize = (dwidth > CGFloat(35.0) ? CGFloat(35.0) : dwidth)
+    }
+    
     //上传文件
-    func drawContext(uploadxml view:DrawContext,xmlStr:String?){
+    func imgContent(view:ImgviewContent,xmlStr:String?){
         self.showdownLoading()
         var params = [String:AnyObject]()
         params["uid"] = "1" as AnyObject
@@ -577,11 +422,15 @@ extension Quartz2DTestController:DrawContextDelegate{
             self?.showMsg("网络异常")
         }
     }
-    
-    func drawContextScale(view:DrawContext,scale:CGFloat){
-        self.view.bringSubview(toFront: self.segment)
-        self.view.bringSubview(toFront: self.bottomView)
-        self.bgImage.transform = CGAffineTransform(scaleX: scale, y: scale)
-    }
 }
 
+extension Quartz2DTestController:UIScrollViewDelegate{
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        for subview in scrollView.subviews {
+            if subview.classForKeyedArchiver == ImgviewContent.classForCoder() {
+                return subview
+            }
+        }
+        return nil
+    }
+}

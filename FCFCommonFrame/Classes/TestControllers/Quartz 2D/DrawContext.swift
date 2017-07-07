@@ -12,6 +12,7 @@ import ObjectMapper
 protocol DrawContextDelegate {
     func drawContext(uploadxml view:DrawContext,xmlStr:String?)
     func drawContextScale(view:DrawContext,scale:CGFloat)
+    func drawContextMove(view:DrawContext,moveX:CGFloat,moveY:CGFloat)
 }
 
 enum DrawingState{
@@ -244,20 +245,82 @@ class DrawContext: UIImageView {
     
     var context:CGContext?
     
+    var touchBenPoint:CGPoint?
+    
+    var originFrame:CGRect?
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinchDid))
-        self.addGestureRecognizer(pinch)
+        self.originFrame = self.frame
+        
+        self.backgroundColor = UIColor.red.withAlphaComponent(0.3)
+        
+//        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinchDid))
+//        self.addGestureRecognizer(pinch)
+//        
+//        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(move))
+//        panGesture.maximumNumberOfTouches = 2
+//        self.addGestureRecognizer(panGesture)
     }
     
     func pinchDid(_ recognizer:UIPinchGestureRecognizer){
-        print(recognizer.scale)
-        if recognizer.scale <= 1.0 {
-            return 
+        print("scale")
+       
+        if recognizer.state == .ended {
+            if let obj = self.boardUndoManager.getTopImg() {
+                if let imgData = obj.imgData {
+                    let img = NSKeyedUnarchiver.unarchiveObject(with: imgData) as! UIImage
+                    self.image = img
+                    self.realImg = self.image
+                }
+            }else{
+                self.image = nil
+                self.realImg = nil
+            }
         }
-        self.transform = CGAffineTransform(scaleX: recognizer.scale, y: recognizer.scale)
-        self.delegate?.drawContextScale(view: self, scale: recognizer.scale)
+        
+        if self.width < UIScreen.main.bounds.width {
+            UIView.animate(withDuration: 0.5, animations: { 
+                self.frame = CGRect(x: 0, y: 40, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 85 - 64)
+            })
+        }else{
+            print("x:\(self.frame.origin.x),y:\(self.frame.origin.y)")
+            self.transform = CGAffineTransform(scaleX: recognizer.scale, y: recognizer.scale)
+            self.delegate?.drawContextScale(view: self, scale: recognizer.scale)
+        }
+    }
+    
+    func move(recognizer:UISwipeGestureRecognizer){
+        print("move")
+        
+        if recognizer.state == .ended {
+            if let obj = self.boardUndoManager.getTopImg() {
+                if let imgData = obj.imgData {
+                    let img = NSKeyedUnarchiver.unarchiveObject(with: imgData) as! UIImage
+                    self.image = img
+                    self.realImg = self.image
+                }
+            }else{
+                self.image = nil
+                self.realImg = nil
+            }
+        }
+        
+        var newCenterPoint:CGPoint?
+        switch recognizer.state {
+        case .began:
+            touchBenPoint = recognizer.location(in: self)
+        default:
+            newCenterPoint = recognizer.location(in: self)
+            let moveX = newCenterPoint!.x-touchBenPoint!.x
+            let moveY = newCenterPoint!.y-touchBenPoint!.y
+            if self.frame.origin.x + moveX <= 0 && self.frame.origin.y + moveY <= 0 && (self.frame.origin.x + self.frame.width) >= (UIScreen.main.bounds.width) {
+                
+                self.frame = CGRect(x: self.frame.origin.x + moveX, y: self.frame.origin.y + moveY, width: self.frame.width, height: self.frame.height)
+                self.delegate?.drawContextMove(view: self, moveX: moveX, moveY: moveY)
+            }
+        }
     }
     
     //初始化🖌️，设置默认为曲线、黑色、笔宽为1.0
@@ -570,6 +633,7 @@ extension DrawContext{
             }
             
             var drawtextView = DrawTextView(frame: CGRect(x: (brush.beginPoint?.x)!, y: ((brush.beginPoint?.y)!-22), width: twidth, height: textH),index:self.boardUndoManager.index + 1,color:brush.strockColor,strokewidth:brush.strokeWidth)
+            drawtextView.isUserInteractionEnabled = true
             perfectTextView(textView: &drawtextView)
             drawtextView.btnDelegate = self
             self.addSubview(drawtextView)
@@ -741,7 +805,6 @@ extension DrawContext:UITextViewDelegate,DrawTextViewDelegate{
 
 //处理手指触碰
 extension DrawContext{
-    
     //统一调用画图方法,解析xml的同时，调用这个方法就OK了
     func drawPoints(state:DrawingState,point:CGPoint,textStr:String?=nil,angle:Double?=nil) {
         self.drawingState = state
@@ -798,56 +861,58 @@ extension DrawContext{
         }
     }
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    func dtouchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if touches.count >= 2 {
             return
-        }
-        
-        let point:CGPoint = (touches.first?.location(in: self))!
-        if !self.rotateding{
-            //每次绘画的时候将之前撤销的清理掉
-            removeUselessSave()
-            self.drawPoints(state: .begin, point: point)
-        }
-    }
-    
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        
-        if touches.count >= 2 {
-            return
-        }
-        
-        let point:CGPoint = (touches.first?.location(in: self))!
-        if !self.rotateding{
-            self.drawPoints(state: .moved, point: point)
-        }else if let drawTV = self.selectedDrawTextView {
-            if !drawTV.textView.frame.contains(point) {
-                let target = drawTV.center
-                let angle = atan2(point.y-target.y, point.x-target.x)
-                drawTV.transformAngle = angle
-                drawTV.transform = CGAffineTransform(rotationAngle: angle)
+        }else{
+            let point:CGPoint = (touches.first?.location(in: self))!
+            if !self.rotateding{
+                //每次绘画的时候将之前撤销的清理掉
+                removeUselessSave()
+                self.drawPoints(state: .begin, point: point)
             }
         }
     }
     
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    func dtouchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         
         if touches.count >= 2 {
             return
-        }
-        
-        let point:CGPoint = (touches.first?.location(in: self))!
-        if !self.rotateding{
-            self.drawPoints(state: .ended, point: point)
+        }else{
+            let point:CGPoint = (touches.first?.location(in: self))!
+            if !self.rotateding{
+                self.drawPoints(state: .moved, point: point)
+            }else if let drawTV = self.selectedDrawTextView {
+                if !drawTV.textView.frame.contains(point) {
+                    let target = drawTV.center
+                    let angle = atan2(point.y-target.y, point.x-target.x)
+                    drawTV.transformAngle = angle
+                    drawTV.transform = CGAffineTransform(rotationAngle: angle)
+                }
+            }
+
         }
     }
     
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    func dtouchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
         if touches.count >= 2 {
             return
+        }else{
+            let point:CGPoint = (touches.first?.location(in: self))!
+            if !self.rotateding{
+                self.drawPoints(state: .ended, point: point)
+            }
         }
-        if let brush = self.brush {
-            brush.endPoint = nil
+    }
+    
+    func dtouchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if touches.count >= 2 {
+            return
+        }else{
+            if let brush = self.brush {
+                brush.endPoint = nil
+            }
         }
     }
 }
