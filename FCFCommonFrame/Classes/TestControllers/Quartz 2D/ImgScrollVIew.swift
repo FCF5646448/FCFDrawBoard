@@ -23,7 +23,7 @@ class ImgScrollVIew: UIScrollView {
 }
 
 extension ImgScrollVIew{
-    
+    //至关重要
     override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         if gestureRecognizer.isKind(of: UIPanGestureRecognizer.self) {
             //移动

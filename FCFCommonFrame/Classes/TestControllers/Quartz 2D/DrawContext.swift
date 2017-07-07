@@ -11,8 +11,6 @@ import ObjectMapper
 
 protocol DrawContextDelegate {
     func drawContext(uploadxml view:DrawContext,xmlStr:String?)
-    func drawContextScale(view:DrawContext,scale:CGFloat)
-    func drawContextMove(view:DrawContext,moveX:CGFloat,moveY:CGFloat)
 }
 
 enum DrawingState{
@@ -247,80 +245,8 @@ class DrawContext: UIImageView {
     
     var touchBenPoint:CGPoint?
     
-    var originFrame:CGRect?
-    
     override func awakeFromNib() {
         super.awakeFromNib()
-        
-        self.originFrame = self.frame
-        
-        self.backgroundColor = UIColor.red.withAlphaComponent(0.3)
-        
-//        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(pinchDid))
-//        self.addGestureRecognizer(pinch)
-//        
-//        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(move))
-//        panGesture.maximumNumberOfTouches = 2
-//        self.addGestureRecognizer(panGesture)
-    }
-    
-    func pinchDid(_ recognizer:UIPinchGestureRecognizer){
-        print("scale")
-       
-        if recognizer.state == .ended {
-            if let obj = self.boardUndoManager.getTopImg() {
-                if let imgData = obj.imgData {
-                    let img = NSKeyedUnarchiver.unarchiveObject(with: imgData) as! UIImage
-                    self.image = img
-                    self.realImg = self.image
-                }
-            }else{
-                self.image = nil
-                self.realImg = nil
-            }
-        }
-        
-        if self.width < UIScreen.main.bounds.width {
-            UIView.animate(withDuration: 0.5, animations: { 
-                self.frame = CGRect(x: 0, y: 40, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 85 - 64)
-            })
-        }else{
-            print("x:\(self.frame.origin.x),y:\(self.frame.origin.y)")
-            self.transform = CGAffineTransform(scaleX: recognizer.scale, y: recognizer.scale)
-            self.delegate?.drawContextScale(view: self, scale: recognizer.scale)
-        }
-    }
-    
-    func move(recognizer:UISwipeGestureRecognizer){
-        print("move")
-        
-        if recognizer.state == .ended {
-            if let obj = self.boardUndoManager.getTopImg() {
-                if let imgData = obj.imgData {
-                    let img = NSKeyedUnarchiver.unarchiveObject(with: imgData) as! UIImage
-                    self.image = img
-                    self.realImg = self.image
-                }
-            }else{
-                self.image = nil
-                self.realImg = nil
-            }
-        }
-        
-        var newCenterPoint:CGPoint?
-        switch recognizer.state {
-        case .began:
-            touchBenPoint = recognizer.location(in: self)
-        default:
-            newCenterPoint = recognizer.location(in: self)
-            let moveX = newCenterPoint!.x-touchBenPoint!.x
-            let moveY = newCenterPoint!.y-touchBenPoint!.y
-            if self.frame.origin.x + moveX <= 0 && self.frame.origin.y + moveY <= 0 && (self.frame.origin.x + self.frame.width) >= (UIScreen.main.bounds.width) {
-                
-                self.frame = CGRect(x: self.frame.origin.x + moveX, y: self.frame.origin.y + moveY, width: self.frame.width, height: self.frame.height)
-                self.delegate?.drawContextMove(view: self, moveX: moveX, moveY: moveY)
-            }
-        }
     }
     
     //初始化🖌️，设置默认为曲线、黑色、笔宽为1.0

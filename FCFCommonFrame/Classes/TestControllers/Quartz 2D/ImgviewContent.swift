@@ -327,49 +327,8 @@ extension ImgviewContent:DrawContextDelegate{
     //上传文件
     func drawContext(uploadxml view:DrawContext,xmlStr:String?){
         self.delegate?.imgContent?(view: self, xmlStr: xmlStr)
-//        self.showdownLoading()
-//        var params = [String:AnyObject]()
-//        params["uid"] = "1" as AnyObject
-//        if let xml = xmlStr {
-//            params["xml_str"] = xml as AnyObject
-//        }
-//        
-//        DownloadManager.DownloadPost(host: "http://gangqinputest.yusi.tv/", path: "urlparam=note/xmlstr/setxmlbyuid", params: params, successed: {[weak self](JsonString) in
-//            print(JsonString ?? "")
-//            self?.hidedownLoading()
-//            let result = Mapper<PostXmlModel>().map(JSONString: JsonString!)
-//            if let obj = result{
-//                if obj.returnCode == "0000" {
-//                    self?.showMsg("上传成功")
-//                }else{
-//                    self?.showMsg("数据有问题")
-//                }
-//            }else{
-//                self?.showMsg("获取数据失败")
-//            }
-//        }) {[weak self] (error) in
-//            self?.hidedownLoading()
-//            self?.showMsg("网络异常")
-//        }
     }
-    
-    func drawContextScale(view:DrawContext,scale:CGFloat){
-//        self.view.bringSubview(toFront: self.segment)
-//        self.view.bringSubview(toFront: self.bottomView)
-//        
-//        if self.bgImage.width < UIScreen.main.bounds.width {
-//            UIView.animate(withDuration: 0.5, animations: {
-//                self.bgImage.frame = CGRect(x: 0, y: 40, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 85 - 64)
-//            })
-//        }else{
-//            self.bgImage.transform = CGAffineTransform(scaleX: scale, y: scale)
-//        }
-    }
-    
-    func drawContextMove(view:DrawContext,moveX:CGFloat,moveY:CGFloat){
-        
-//        self.bgImage.frame = CGRect(x: self.bgImage.frame.origin.x + moveX, y: self.bgImage.frame.origin.y + moveY, width: self.bgImage.width, height: self.bgImage.height)
-    }
+
 }
 
 
